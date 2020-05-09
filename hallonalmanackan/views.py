@@ -5,10 +5,16 @@ def index(request):
     from datetime import date, timedelta
     from dateutil.rrule import rrule, DAILY
 
-    # todo: week number, visually mark week
+    if 'year' in request.GET:
+        year = int(request.GET['year'])
+    else:
+        year = date.today().year
 
-    first_of_year = date(date.today().year, 1, 1)
-    last_of_year = date(date.today().year + 1, 1, 1) - timedelta(days=1)
+    today = date.today()
+    week_number = date.isocalendar(date.today())[1]
+
+    first_of_year = date(year, 1, 1)
+    last_of_year = date(year + 1, 1, 1) - timedelta(days=1)
 
     days = {}
     week = {}
@@ -25,10 +31,6 @@ def index(request):
         5: 'lör',
         6: 'sön',
     }
-
-    today = date.today()
-    week_number = date.isocalendar(today)[1]
-    year = today.year
 
     month_names = {i+1: x for i, x in enumerate([
         'Januari',
@@ -83,11 +85,15 @@ def index(request):
     th {
         padding-bottom: 20px;
     }
+    a {
+        color: gray;
+        text-decoration: none;
+    }
     </style>
     <body>
     '''
 
-    html += '<h1>' + str(year) + '</h1>'
+    html += f'<h1><a href="?year={year-1}">&lt;</a> {str(year)}  <a href="?year={year+1}">&gt;</a></h1>'
 
     html += '<table>'
     html += '<tr>'
@@ -106,7 +112,7 @@ def index(request):
                 week_number = str(date(year, month, day).isocalendar()[1])
             except ValueError:
                 week_number = None
-            today_class = 'today' if month == today.month and day == today.day else ''
+            today_class = 'today' if year == today.year and month == today.month and day == today.day else ''
             html += f'<td class="weekday_{weekday} week_{even_odd_week} {today_class} w_{week_number}">'
             if weekday is not None:
                 html += '<span class="number">' + str(day) + '</span> '
