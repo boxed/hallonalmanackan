@@ -18,6 +18,8 @@ def fill_holidays(year):
         if 'helgdag' in x
     ]
     for x in holidays:
+        if x['name'] == 'Annandag pingst':
+            continue
         Holiday.objects.create(name=x['name'], year=x['date'].year, month=x['date'].month, day=x['date'].day)
 
 
@@ -31,6 +33,27 @@ def get_holidays(year, fill=True):
         fill_holidays(year)
         return get_holidays(year, fill=False)
     return holidays
+
+
+holiday_short_names = {
+    'Nyårsdagen': 'Nyår',
+    'Trettondedag jul': '13',
+    'Långfredagen': 'Lång',
+    'Påskafton': 'Påsk',
+    'Påskdagen': 'Påsk',
+    'Annandag påsk': 'Påsk',
+    'Första Maj': '1 maj',
+    'Kristi himmelsfärdsdag': 'Kristi',
+    'Pingstdagen': 'Pingst',
+    'Sveriges nationaldag': '🇸🇪',
+    'Midsommarafton': 'Mids',
+    'Midsommardagen': 'Mids',
+    'Alla helgons dag': 'Helgon',
+    'Julafton': 'Jul 🎅',
+    'Juldagen': 'Jul',
+    'Annandag jul': 'Annan',
+    'Nyårsafton': 'Nyår',
+}
 
 
 def index(request):
@@ -154,9 +177,12 @@ def index(request):
             html += f'<td class="weekday_{weekday} week_{even_odd_week} {today_class} w_{week_number} {holiday_class}" title="{alt}">'
             if weekday is not None:
                 html += f'<span class=\"number\">{day}</span> '
-                html += weekday_name[weekday]
-                if d in holidays:
-                    html += '*'
+                if month == 2 and day == 14:
+                    html += '❤️'
+                elif d in holidays:
+                    html += holiday_short_names[holidays[d]]
+                else:
+                    html += weekday_name[weekday]
 
             if weekday == 0:
                 html += f' <span class=\"week_number\">{week_number}</span>'
