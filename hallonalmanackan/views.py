@@ -1,4 +1,36 @@
+from datetime import date, datetime
+from json import loads
+
+from requests import get
 from django.http import HttpResponse
+
+from .models import Holiday
+
+
+def fill_holidays(year):
+    days = loads(get(f'https://api.dryg.net/dagar/v2.1/{year}').text)['dagar']
+    holidays = [
+        dict(
+            name=x['helgdag'],
+            date=datetime.strptime(x['datum'], '%Y-%m-%d'),
+        )
+        for x in days
+        if 'helgdag' in x
+    ]
+    for x in holidays:
+        Holiday.objects.create(name=x['name'], year=x['date'].year, month=x['date'].month, day=x['date'].day)
+
+
+def get_holidays(year, fill=True):
+    holidays = {
+        date(x.year, x.month, x.day): x.name
+        for x in Holiday.objects.filter(year=year)
+    }
+    if not holidays and year > 1990:
+        assert fill
+        fill_holidays(year)
+        return get_holidays(year, fill=False)
+    return holidays
 
 
 def index(request):
@@ -57,7 +89,7 @@ def index(request):
     .weekday_0 {
         border-top: 1px solid black;
     }
-    .weekday_6 {
+    .weekday_6, .holiday {
         color: #e10000;
     }
     .week_0 {
@@ -93,13 +125,15 @@ def index(request):
     <body>
     '''
 
-    html += f'<h1><a href="?year={year-1}">&lt;</a> {str(year)}  <a href="?year={year+1}">&gt;</a></h1>'
+    html += f'<h1><a href="?year={year-1}">&lt;</a> {year}  <a href="?year={year+1}">&gt;</a></h1>'
 
     html += '<table>'
     html += '<tr>'
     for month in range(1, 13):
         html += '<th>' + month_names[month] + '</th>'
     html += '</tr>'
+
+    holidays = get_holidays(year)
 
     for day in range(1, 32):
         html += '<tr>'
@@ -109,17 +143,23 @@ def index(request):
             if weekday is None:
                 even_odd_week = 'blank'
             try:
-                week_number = str(date(year, month, day).isocalendar()[1])
+                d = date(year, month, day)
+                week_number = str(d.isocalendar()[1])
             except ValueError:
                 week_number = None
+                d = None
             today_class = 'today' if year == today.year and month == today.month and day == today.day else ''
-            html += f'<td class="weekday_{weekday} week_{even_odd_week} {today_class} w_{week_number}">'
+            holiday_class = 'holiday' if d in holidays else ''
+            alt = holidays.get(d, '')
+            html += f'<td class="weekday_{weekday} week_{even_odd_week} {today_class} w_{week_number} {holiday_class}" title="{alt}">'
             if weekday is not None:
-                html += '<span class="number">' + str(day) + '</span> '
+                html += f'<span class=\"number\">{day}</span> '
                 html += weekday_name[weekday]
+                if d in holidays:
+                    html += '*'
 
             if weekday == 0:
-                html += ' <span class="week_number">' + week_number + '</span>'
+                html += f' <span class=\"week_number\">{week_number}</span>'
             html += '</td>'
         html += '</tr>'
     html += '''

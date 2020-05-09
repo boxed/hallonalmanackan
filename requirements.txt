@@ -3,3 +3,4 @@ gunicorn
 iommi
 python-dateutil
 mysqlclient
+requests
