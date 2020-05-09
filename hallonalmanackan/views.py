@@ -80,6 +80,9 @@ def index(request):
     body {
         text-align: center;
     }
+    th {
+        padding-bottom: 20px;
+    }
     </style>
     <body>
     '''
