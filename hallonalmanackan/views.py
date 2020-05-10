@@ -144,6 +144,9 @@ def index(request):
         color: gray;
         text-decoration: none;
     }
+    td {
+        min-width: 90px;
+    }
     </style>
     <body>
     '''
