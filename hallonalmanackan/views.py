@@ -107,7 +107,10 @@ def index(request):
     <title>
     v''' + str(week_number) + '''
     </title>
-
+    ''' + f'''
+    <link rel="prefetch" href="?year={year-1}">
+    <link rel="prefetch" href="?year={year+1}">
+    ''' + '''
     <style>
     .weekday_0 {
         border-top: 1px solid black;
